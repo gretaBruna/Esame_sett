@@ -1,0 +1,53 @@
+class Controller:
+    def __init__(self, view: View, model: Model):
+        # the view, with the graphical elements of the UI
+        self._view: View = view
+        # the model, which implements the logic of the program and holds the data
+        self._model = model
+
+
+    def handle_graph(self, e):
+
+        maxLat, minLat, maxLong, minLong = self._model.getParametri()
+
+        try:
+            la = int(self._view.txt_latitude.value)
+            li = int(self._view.txt_longitude.value)
+        except ValueError:
+            self._view.txt_result1.controls.clear()
+            self._view.txt_result1.controls.append(ft.Text("Inserire valore numerio"))
+            self._view.update_page()
+            return
+
+        if la > maxLat or la < minLat or li > maxLong or li < minLong:
+            self._view.txt_result1.controls.clear()
+            self._view.txt_result1.controls.append(ft.Text("Inserire valore nel range"))
+            self._view.update_page()
+            return
+
+        self._model.buildGraph(self._view.ddshape.value, la, li)
+        self._view.txt_result1.controls.clear()
+        self._view.txt_result1.controls.append(ft.Text(f"Il grafo ha {self._model.getNNodes()} nodi e {self._model.getNEdges()} archi"))
+        self._view.txt_result1.controls.append(ft.Text("Nodi di grado maggiore:"))
+        ris = self._model.getGradoMax()
+        for r in ris:
+            self._view.txt_result1.controls.append(ft.Text(f"{r[0]} --> {r[1]} "))
+
+        self._view.txt_result1.controls.append(ft.Text("Archi di peso maggiore:"))
+        res = self._model.getPesoMax()
+        for r in res:
+            self._view.txt_result1.controls.append(ft.Text(f"{r[0]} --- {r[1]} --- {r[2]}"))
+        self._view.update_page()
+
+
+
+    def handle_path(self, e):
+        pass
+
+    def fill_ddshape(self):
+
+        shapes = self._model.getShape()
+        for s in shapes:
+            self._view.ddshape.options.append(ft.dropdown.Option(s))
+        self._view.update_page()
+
