@@ -1,0 +1,131 @@
+from database.DB_connect import DBConnect
+from model import state
+from model.state import State
+from model.sighting import Sighting
+
+
+class DAO():
+    def __init__(self):
+        pass
+
+
+    @staticmethod
+    def get_all_states():
+        cnx = DBConnect.get_connection()
+        result = []
+        if cnx is None:
+            print("Connessione fallita")
+        else:
+            cursor = cnx.cursor(dictionary=True)
+            query = """select * 
+                    from state s"""
+            cursor.execute(query)
+
+            for row in cursor:
+                result.append(
+                    State(**row))
+
+            cursor.close()
+            cnx.close()
+        return result
+
+    @staticmethod
+    def get_all_sightings():
+        cnx = DBConnect.get_connection()
+        result = []
+        if cnx is None:
+            print("Connessione fallita")
+        else:
+            cursor = cnx.cursor(dictionary=True)
+            query = """select * 
+                    from sighting s 
+                    order by `datetime` asc """
+            cursor.execute(query)
+
+            for row in cursor:
+                result.append(Sighting(**row))
+            cursor.close()
+            cnx.close()
+        return result
+
+    @staticmethod
+    def getParametri():
+        cnx = DBConnect.get_connection()
+        result = []
+        if cnx is None:
+            print("Connessione fallita")
+        else:
+            cursor = cnx.cursor(dictionary=True)
+            query = """select max(Lat) as maxLat, min(Lat) as minLat, max(Lng) as maxLong, min(Lng) as minLong
+from state s 
+
+"""
+            cursor.execute(query)
+
+            for row in cursor:
+                result.append((row['maxLat'], row['minLat'], row['maxLong'], row['minLong']))
+            cursor.close()
+            cnx.close()
+        return result
+
+    @staticmethod
+    def getForme():
+        cnx = DBConnect.get_connection()
+        result = []
+        if cnx is None:
+            print("Connessione fallita")
+        else:
+            cursor = cnx.cursor(dictionary=True)
+            query = """select distinct shape 
+from sighting s
+where shape != ""
+order by shape desc 
+
+    """
+            cursor.execute(query)
+
+            for row in cursor:
+                result.append(row['shape'])
+            cursor.close()
+            cnx.close()
+        return result
+
+    @staticmethod
+    def getNodi(forma, lat, long, idMap):
+        cnx = DBConnect.get_connection()
+        result = []
+        if cnx is None:
+            print("Connessione fallita")
+        else:
+            cursor = cnx.cursor(dictionary=True)
+            query = """select distinct s2.id as stato
+from sighting s, state s2 
+where s.shape = %s and s2.Lat > %s and s2.Lng > %s and s.state = s2.id 
+        """
+            cursor.execute(query, (forma,lat,long))
+
+            for row in cursor:
+                result.append(idMap[row['stato']])
+            cursor.close()
+            cnx.close()
+        return result
+
+    @staticmethod
+    def getPeso(stato, forma):
+        cnx = DBConnect.get_connection()
+        result = 0
+        if cnx is None:
+            print("Connessione fallita")
+        else:
+            cursor = cnx.cursor(dictionary=True)
+            query = """select sum(duration) as peso
+from sighting s 
+where state = %s and shape = %s
+            """
+            cursor.execute(query, (stato, forma))
+
+            for row in cursor:
+                result = row['peso']
+            cursor.close()
+            cnx.close()
+        return result
