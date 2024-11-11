@@ -1,0 +1,62 @@
+class Model:
+    def __init__(self):
+
+        self._grafo = nx.Graph()
+        self._stateMap = {}
+        self._stati = DAO.get_all_states()
+        for s in self._stati:
+            self._stateMap[s.id] = s
+
+
+    def getParametri(self):
+
+        par =  DAO.getParametri()
+        for p in par:
+            maxLat = p[0]
+            minLat = p[1]
+            maxLong = p[2]
+            minLong = p[3]
+        return maxLat, minLat, maxLong, minLong
+
+    def getShape(self):
+        return DAO.getForme()
+
+    def buildGraph(self, forma, lat, long):
+
+        nodi = DAO.getNodi(forma, lat, long, self._stateMap)
+        self._grafo.add_nodes_from(nodi)
+        for n in nodi:
+            for m in nodi:
+                if n.Neighbors != "" and m.id in n.Neighbors:
+                    p1 = DAO.getPeso(n.id, forma)
+                    p2 = DAO.getPeso(m.id, forma)
+                    try:
+                        pp = int(p1)
+                        ppp = int(p2)
+                    except ValueError:
+                        print("Errore")
+                    p = pp+ppp
+                    self._grafo.add_edge(n,m, weight= p)
+
+    def getGradoMax(self):
+
+        lista = sorted(self._grafo.degree, key=lambda x:x[1], reverse= True)
+        res = []
+        for i in range(0, 5):
+            res.append(lista[i])
+        return res
+
+    def getPesoMax(self):
+
+        lista = sorted(self._grafo.edges(data=True), key=lambda x:x[2].get('weight'), reverse=True)
+        res = []
+        for i in range(0,5):
+            res.append(lista[i])
+        return res
+
+    def getNNodes(self):
+        return len(self._grafo.nodes)
+
+    def getNEdges(self):
+        return len(self._grafo.edges)
+
